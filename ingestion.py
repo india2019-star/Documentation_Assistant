@@ -19,18 +19,22 @@ def ingest(index_name):
 
     all_files = get_pdf_file_paths(assets_folder)
     all_vectors = []
+
+    for item in all_files:
+        load_split_push(item, index_name)
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        for result in executor.map(load_split_push, all_files):
-            all_vectors.append(result)
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    #     for result in executor.map(load_split_push, all_files):
+    #         all_vectors.append(result)
     
+    # print(all_vectors)
     # ingest_vectors_in_batches(all_vectors, 5)
     print('Done ingesting all')
     return 1
 
 
 
-def load_split_push(filePath: string):
+def load_split_push(filePath: string, index_name):
     filePathStr = str(filePath).replace('\\','/')
     pyPdfLoaderInstance = PyPDFLoader(filePathStr)
     loaded_doc = pyPdfLoaderInstance.load()
@@ -42,21 +46,21 @@ def load_split_push(filePath: string):
 
 
 
-    vectors = []
-    cnt = 0
-    for doc in splitted_docs:
-        text = doc.page_content
-        metadata = {"source": filePathStr}
+    # vectors = []
+    # cnt = 0
+    # for doc in splitted_docs:
+    #     text = doc.page_content
+    #     metadata = {"source": filePathStr}
         
-        embedding = embeddings.embed_query(text)
+    #     embedding = embeddings.embed_query(text)
         
-        vectors.append((f"{filePathStr}-{cnt}", embedding, metadata))
-        cnt = cnt+1
+    #     vectors.append((f"{filePathStr}-{cnt}", embedding, metadata))
+    #     cnt = cnt+1
 
-    # print("Starting ingestion...")
-    # PineconeVectorStore.from_documents(splitted_docs,embeddings,index_name=index_name)
-    # print("Finished ingestion...")
-    return vectors
+    print("Starting ingestion...")
+    PineconeVectorStore.from_documents(splitted_docs,embeddings,index_name=index_name)
+    print("Finished ingestion...")
+    # return vectors
 
 
 def ingest_vectors_in_batches(vectors,batch_size=5):

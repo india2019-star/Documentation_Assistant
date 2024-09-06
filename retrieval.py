@@ -8,10 +8,10 @@ from langchain import hub
 
 def retrieval_func(index_name, question, chat_history: list[dict[str, any]] = []):
     embeddings = OllamaEmbeddings(
-        model="llama3"
+        model="nomic-embed-text"
     )
 
-    llm = ChatOllama(model="llama3")
+    llm = ChatOllama(model="wizardlm2")
     vector_store = PineconeVectorStore(
         index_name=index_name,
         embedding=embeddings

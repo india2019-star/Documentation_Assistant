@@ -24,7 +24,7 @@ def process_and_retrieve():
         for key, value in item.items():
             chat_history_tuple_list.append((key, value))
     print(chat_history_tuple_list)
-    result = retrieval_func(INDEX_NAME3,input_prompt["question"], chat_history_tuple_list)
+    result = retrieval_func(INDEX_NAME4,input_prompt["question"], chat_history_tuple_list)
     if(result and result["answer"]):
         print(result)
         return jsonify(result["answer"]), 200
