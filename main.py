@@ -9,11 +9,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-INDEX_NAME = os.environ['INDEX_NAME']
-INDEX_NAME2 = os.environ['INDEX_NAME2']
-INDEX_NAME3 = os.environ['INDEX_NAME3']
-INDEX_NAME4 = os.environ['INDEX_NAME4']
-PINECONE_API_KEY = os.environ['PINECONE_API_KEY']
 
 @app.route("/user-prompt", methods=["POST"])
 def process_and_retrieve():
@@ -24,7 +19,7 @@ def process_and_retrieve():
         for key, value in item.items():
             chat_history_tuple_list.append((key, value))
     print(chat_history_tuple_list)
-    result = retrieval_func(INDEX_NAME4,input_prompt["question"], chat_history_tuple_list)
+    result = retrieval_func(input_prompt["question"], chat_history_tuple_list)
     if(result and result["answer"]):
         print(result)
         return jsonify(result["answer"]), 200
@@ -38,14 +33,9 @@ def home():
 
 @app.route("/ingest-code")
 def process_and_ingest():
-    if(ingest(INDEX_NAME4) == 1):
+    if(ingest() == 1):
         return jsonify("OK"),200
     return jsonify("INTERNAL SERVER ERROR"), 500 
-
-
-
-
-
 
 
 

@@ -13,6 +13,10 @@ langchain-ollama = "*"
 pypdf = "*"
 flask = "*"
 flask-cors = "*"
+psycopg2-binary = "*"
+pgvector = "*"
+pymupdf = "*"
+rapidocr-onnxruntime = "*"
 
 [dev-packages]
 
