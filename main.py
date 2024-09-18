@@ -1,65 +1,54 @@
-import os
-import json
 
+import fastapi
 from ingestion import ingest
 from retrieval import retrieval_func
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from schemas import chat_request, chat_response
+from typing import List, Dict
+from fastapi.middleware.cors import CORSMiddleware
 
-app = Flask(__name__)
-CORS(app)
+app = fastapi.FastAPI()
+
+origins = [
+    "http://localhost:4200"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],
+)
 
 
-@app.route("/user-prompt", methods=["POST"])
-def process_and_retrieve():
-    input_prompt = request.get_json()
+@app.post("/user-prompt", response_model=chat_response.ChatResponse)
+def process_and_retrieve(req : chat_request.ChatRequest):
+    print(req)
     chat_history_tuple_list = []
-    chat_history: list[dict[str,any]] = input_prompt["chatHistory"]
+    chat_history: List[Dict[str,str]] = req.chat_history
     for item in chat_history:
         for key, value in item.items():
             chat_history_tuple_list.append((key, value))
     print(chat_history_tuple_list)
-    result = retrieval_func(input_prompt["question"], chat_history_tuple_list)
+    result = retrieval_func(req.question, chat_history_tuple_list)
     if(result and result["answer"]):
         print(result)
-        return jsonify(result["answer"]), 200
-    return jsonify("Internal Server Error"), 500
+        return chat_response.ChatResponse(answer=result["answer"], responseCode=200, responseStatus="OK")
+    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 
 
 
-@app.route("/")
-def home():
-    return "Home"
 
-@app.route("/ingest-code")
+
+@app.get("/ingest-code", response_model= chat_response.ChatResponse)
 def process_and_ingest():
     if(ingest() == 1):
-        return jsonify("OK"),200
-    return jsonify("INTERNAL SERVER ERROR"), 500 
+        return chat_response.ChatResponse(answer="DONE", responseCode=200, responseStatus="OK")
+    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 
 
 
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
-    # f = True
-    # if(f == False):
-    #    ingest(INDEX_NAME)
-
-
-    # while(True):
-    #     print("---------------------------MENU------------------------------------\n\n")
-    #     print("1. Documentation assistant\n")
-    #     print("0. Exit\n")
-    #     ch = int(input("Enter your choice\n"))
-
-    #     if(ch == 1):
-    #         question = input("Enter your question...\n")
-    #         retrieval_func(INDEX_NAME, question)
-    #     elif(ch == 0):
-    #         print("Thank you for using this utility...\n")
-    #         break
 
 
 

@@ -11,12 +11,12 @@ langchainhub = "*"
 langchain-pinecone = "*"
 langchain-ollama = "*"
 pypdf = "*"
-flask = "*"
-flask-cors = "*"
 psycopg2-binary = "*"
 pgvector = "*"
 pymupdf = "*"
 rapidocr-onnxruntime = "*"
+fastapi = "*"
+uvicorn = "*"
 
 [dev-packages]
 

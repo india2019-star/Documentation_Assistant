@@ -4,10 +4,11 @@ from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain_community.vectorstores import PGVector
 from langchain import hub
+from typing import List, Dict
 import os
 
 
-def retrieval_func(question, chat_history: list[dict[str, any]] = []):
+def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
     embeddings = OllamaEmbeddings(
         model="mxbai-embed-large"
     )
@@ -20,7 +21,7 @@ def retrieval_func(question, chat_history: list[dict[str, any]] = []):
     combine_stuff_documents = create_stuff_documents_chain(llm, retrieval_qa_chat_prompt)
     history_chat_prompt = hub.pull("langchain-ai/chat-langchain-rephrase")
     history_retrieval_chat = create_history_aware_retriever(
-        llm, vector_store.as_retriever(search_kwargs={"k": 1}), history_chat_prompt
+        llm, vector_store.as_retriever(search_kwargs={"k": 2}), history_chat_prompt
     )
     retrieval_chain = create_retrieval_chain(
         history_retrieval_chat, combine_docs_chain=combine_stuff_documents
