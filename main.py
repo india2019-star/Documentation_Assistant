@@ -31,10 +31,7 @@ def process_and_retrieve(req : chat_request.ChatRequest):
             chat_history_tuple_list.append((key, value))
     print(chat_history_tuple_list)
     result = retrieval_func(req.question, chat_history_tuple_list)
-    if(result and result["answer"]):
-        print(result)
-        return chat_response.ChatResponse(answer=result["answer"], responseCode=200, responseStatus="OK")
-    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
+    return chat_response.ChatResponse(answer=result["answer"], responseCode=200, responseStatus="OK", sourceDocuments=result['source_documents'])
 
 
 
@@ -43,7 +40,7 @@ def process_and_retrieve(req : chat_request.ChatRequest):
 @app.get("/ingest-code", response_model= chat_response.ChatResponse)
 def process_and_ingest():
     if(ingest() == 1):
-        return chat_response.ChatResponse(answer="DONE", responseCode=200, responseStatus="OK")
+        return chat_response.ChatResponse(answer="DONE", responseCode=200, responseStatus="OK", sourceDocuments="")
     raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 
 
