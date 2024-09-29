@@ -1,21 +1,22 @@
+import json
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain_community.vectorstores import PGVector
-from langchain.prompts import PromptTemplate
+from langchain_core.messages import AIMessageChunk
 from langchain import hub
 from typing import List, Dict
 import os
 import fastapi
 
 
-def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
+async def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
     embeddings = OllamaEmbeddings(
         model="mxbai-embed-large"
     )
 
-    llm = ChatOllama(model="qwen2:0.5b", temperature=0)
+    llm = ChatOllama(model="qwen2.5:0.5b", temperature=0, disable_streaming=False)
     vector_store = PGVector(connection_string=os.environ['POSTGRE_CONNECTION_STRING'],
                             collection_name=os.environ['POSTGRE_COLLECTION_NAME'],
                             embedding_function=embeddings)
@@ -47,12 +48,28 @@ def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
         history_retrieval_chat, combine_docs_chain=combine_stuff_documents
     )
     result = retrieval_chain.invoke(input={"input":question, "chat_history": chat_history})
+    # chunk_result = ""
+    # async for event in retrieval_chain.astream_events(
+    #     input={"input":question, "chat_history": chat_history},
+    #     version="v2"
+    # ):
+    #     if "data" in event and "chunk" in event["data"]:
+    #         chunk_result = serialize_chunks(event["data"]["chunk"])
+    #         if chunk_result is not None and  len(chunk_result) != 0:
+    #                 data_dict = {"data": chunk_result}
+    #                 data_json = json.dumps(data_dict)
+    #                 yield f"data: {data_json}\n\n"
+
+
+
+        
     if(not result):
         raise fastapi.HTTPException(status_code=500, detail="INTERNAL SERVER ERROR")
-    print(result)
+    
+    
     return {
         "question" : question,
-        "answer" : result["answer"],
+        "answer" : result["answer"], 
         "source_documents" : format_source_documents(result["context"])
     }
 
@@ -66,4 +83,11 @@ def format_source_documents(context):
     for index, item in enumerate(source_docs_list):
         source_docs_in_string_format += f"{index + 1}. {item}\n"
     return source_docs_in_string_format
+
+def serialize_chunks(chunk):
+    print(chunk)
+    if isinstance(chunk, AIMessageChunk):
+        return chunk.content
+    else:
+        fastapi.HTTPException(status_code=404, detail="Unformatted type")
 

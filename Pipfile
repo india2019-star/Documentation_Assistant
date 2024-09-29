@@ -17,6 +17,7 @@ pymupdf = "*"
 rapidocr-onnxruntime = "*"
 fastapi = "*"
 uvicorn = "*"
+python-multipart = "*"
 
 [dev-packages]
 
