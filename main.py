@@ -5,7 +5,7 @@ from retrieval import retrieval_func
 from schemas import chat_request, chat_response
 from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import UploadFile
+from fastapi import File, UploadFile
 from fastapi.responses import StreamingResponse
 
 app = fastapi.FastAPI()
@@ -47,10 +47,10 @@ def process_and_ingest():
 
 
 @app.post("/file-upload")
-async def ingest_docs_and_insert(files: List[UploadFile]):
-    for file in files:
-        print(f"\n{file.filename}\n")
-    return "OK"
+async def ingest_docs_and_insert(file: UploadFile = File(...)):
+    # for file in files:
+    #     print(f"\n{file.filename}\n")
+    return {"filename" : file.filename}
 
 
 
