@@ -17,9 +17,11 @@ async def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
     )
 
     llm = ChatOllama(model="qwen2.5:0.5b", temperature=0, disable_streaming=False)
-    vector_store = PGVector(connection_string=os.environ['POSTGRE_CONNECTION_STRING'],
+    vector_store_retriever = PGVector(connection_string=os.environ['POSTGRE_CONNECTION_STRING'],
                             collection_name=os.environ['POSTGRE_COLLECTION_NAME'],
-                            embedding_function=embeddings)
+                            embedding_function=embeddings).as_retriever(search_type="similarity_score_threshold",search_kwargs={
+                                                                                                "k": 5,
+                                                                                                "score_threshold": 0.61})
     # template = r'''
     # Answer the questions based solely on the context provided below:
     # <context>
@@ -39,10 +41,7 @@ async def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
     combine_stuff_documents = create_stuff_documents_chain(llm, retrieval_qa_chat_prompt)
     history_chat_prompt = hub.pull("langchain-ai/chat-langchain-rephrase")
     history_retrieval_chat = create_history_aware_retriever(
-        llm, vector_store.as_retriever(search_type="similarity_score_threshold",search_kwargs={
-                                                                                                "k": 5,
-                                                                                                "score_threshold": 0.61}),
-                                                                                                  history_chat_prompt
+        llm, vector_store_retriever, history_chat_prompt
     )
     retrieval_chain = create_retrieval_chain(
         history_retrieval_chat, combine_docs_chain=combine_stuff_documents
@@ -81,6 +80,8 @@ def format_source_documents(context):
     source_docs_list.sort()
     source_docs_in_string_format = "Sources:\n"
     for index, item in enumerate(source_docs_list):
+        item = str(item).replace("\\","/")
+        item = str(item).replace("G:/","https://")
         source_docs_in_string_format += f"{index + 1}. {item}\n"
     return source_docs_in_string_format
 
