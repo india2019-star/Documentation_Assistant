@@ -26,6 +26,11 @@ app.add_middleware(
 @app.post("/user-prompt", response_model=chat_response.ChatResponse)
 async def process_and_retrieve(req : chat_request.ChatRequest):
     print(req)
+    if req.question in ["Hi", "Hello"]:
+        return chat_response.ChatResponse(answer="Hi there, How can I help you?", responseCode=200, responseStatus="OK", sourceDocuments="")
+    elif req.question in ["Thanks", "Ok Thanks", "Bye", "Nice talking to you"]:
+        return chat_response.ChatResponse(answer="Glad I could help, Bye Bye...", responseCode=200, responseStatus="OK", sourceDocuments="")
+    
     chat_history_tuple_list = []
     chat_history: List[Dict[str,str]] = req.chat_history
     for item in chat_history:
