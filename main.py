@@ -1,5 +1,7 @@
 
+from queue import Queue
 import fastapi
+from handler import CustomCallBackHandler
 from ingestion import ingest
 from retrieval import retrieval_func
 from schemas import chat_request, chat_response
@@ -7,6 +9,8 @@ from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import File, UploadFile
 from fastapi.responses import StreamingResponse
+
+from streaming_retrieval import response_generator_func
 
 app = fastapi.FastAPI()
 
@@ -56,6 +60,20 @@ async def ingest_docs_and_insert(file: UploadFile = File(...)):
     # for file in files:
     #     print(f"\n{file.filename}\n")
     return {"filename" : file.filename}
+
+
+@app.post("/streaming-test")
+async def process_and_retrieve(req : chat_request.ChatRequest):
+    print(req)
+    streamer_queue = Queue()
+    customHandler = CustomCallBackHandler(queue=streamer_queue)
+    chat_history_tuple_list = []
+    chat_history: List[Dict[str,str]] = req.chat_history
+    for item in chat_history:
+        for key, value in item.items():
+            chat_history_tuple_list.append((key, value))
+    return StreamingResponse(response_generator_func(req.question, chat_history_tuple_list, streamer_queue, customHandler), media_type="text/event-stream")
+    # return chat_response.ChatResponse(answer=result["answer"], responseCode=200, responseStatus="OK", sourceDocuments=result['source_documents'])
 
 
 
