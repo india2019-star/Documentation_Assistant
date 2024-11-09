@@ -57,9 +57,15 @@ def process_and_ingest():
 
 @app.post("/file-upload")
 async def ingest_docs_and_insert(file: UploadFile = File(...)):
-    # for file in files:
-    #     print(f"\n{file.filename}\n")
-    return {"filename" : file.filename}
+    if file is None:
+        raise fastapi.HTTPException(status_code=404, detail="NO VALID FILE UPLOADED!!!")
+    contents = await file.read()
+    if(len(contents) == 0):
+        raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
+    else:
+        if(ingest(contents, file) == 1):
+            return {"filename" : file.filename}
+    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 
 
 @app.post("/streaming-test")

@@ -3,24 +3,19 @@ import os
 from pathlib import Path
 import concurrent.futures
 import string
+from fastapi import File, UploadFile
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.vectorstores import PGVector
-from langchain_text_splitters import CharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 
 
-def ingest():
-    assets_folder = Path('assets')
+def ingest(file_contents, file: UploadFile = File(...)):
+    assets_folder = Path('temp_store')
 
-    all_files = get_pdf_file_paths(assets_folder)
-    for item in all_files:
-        load_split_push(item)
-    # process_pdfs(all_files)
-    # embeddings = OllamaEmbeddings(
-    #     model="mxbai-embed-large"
-    # )
-    # vector_result = embeddings.embed_query('When has the RAILWAY WOMEN\'S WELFARE CENTRAL ORGANISATION has decided to conduct the All India On SPot essay competition?')
-    print('Done ingesting all')
+    uploaded_file_location = get_pdf_file_paths(assets_folder, file_contents, file)
+    print(uploaded_file_location)
+    load_split_push(uploaded_file_location)
     return 1
 
 
@@ -29,7 +24,7 @@ def load_split_push(filePath: string):
     filePathStr = str(filePath).replace('\\','/')
     pyMuPdfLoaderInstance = PyMuPDFLoader(filePathStr, extract_images=True)
     loaded_doc = pyMuPdfLoaderInstance.load()
-    doc_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200,separator="\n", length_function=len)
+    doc_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
     splitted_docs = doc_splitter.split_documents(documents=loaded_doc)
     embeddings = OllamaEmbeddings(
         model="mxbai-embed-large"
@@ -41,11 +36,17 @@ def load_split_push(filePath: string):
                             connection_string=os.environ['POSTGRE_CONNECTION_STRING'],
                             use_jsonb=True)
     print("Finished ingestion...")
+    if(os.path.isfile(filePath)):
+        os.remove(filePath)
+        print(f"File with path: {filePath} removed successfully...")
 
 
-def get_pdf_file_paths(folder_path):
-    pdf_files = glob.glob(os.path.join(folder_path, "*.pdf"))
-    return [os.path.abspath(pdf) for pdf in pdf_files]
+def get_pdf_file_paths(folder_path,file_contents, file : UploadFile = File(...)):
+    file_location = os.path.join(folder_path, file.filename)
+    with open(file_location, "wb") as buffer:
+        buffer.write(file_contents)
+    
+    return file_location
 
 
 def process_pdfs(all_pdfs_path_list):
