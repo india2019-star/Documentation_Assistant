@@ -18,6 +18,9 @@ rapidocr-onnxruntime = "*"
 fastapi = "*"
 uvicorn = "*"
 python-multipart = "*"
+pytesseract = "*"
+pypdfium2 = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

@@ -1,6 +1,7 @@
 
 from queue import Queue
 import fastapi
+import os
 from handler import CustomCallBackHandler
 from ingestion import ingest
 from retrieval import retrieval_func
@@ -9,8 +10,14 @@ from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import File, UploadFile
 from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
 
 from streaming_retrieval import response_generator_func
+
+load_dotenv(override=True)
+
+DB_COLLECTION_NAME= os.getenv('POSTGRE_COLLECTION_NAME')
+DB_CONN_STRING= os.getenv('POSTGRE_CONNECTION_STRING')
 
 app = fastapi.FastAPI()
 
@@ -41,18 +48,9 @@ async def process_and_retrieve(req : chat_request.ChatRequest):
         for key, value in item.items():
             chat_history_tuple_list.append((key, value))
     # return StreamingResponse(retrieval_func(req.question, chat_history_tuple_list), media_type="text/plain")
-    result = await retrieval_func(req.question, chat_history_tuple_list)
+    result = await retrieval_func(req.question, DB_COLLECTION_NAME, DB_CONN_STRING, chat_history_tuple_list)
     return chat_response.ChatResponse(answer=result["answer"], responseCode=200, responseStatus="OK", sourceDocuments=result['source_documents'])
 
-
-
-
-
-@app.get("/ingest-code", response_model= chat_response.ChatResponse)
-def process_and_ingest():
-    if(ingest() == 1):
-        return chat_response.ChatResponse(answer="DONE", responseCode=200, responseStatus="OK", sourceDocuments="")
-    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 
 
 @app.post("/file-upload")
@@ -63,7 +61,7 @@ async def ingest_docs_and_insert(file: UploadFile = File(...)):
     if(len(contents) == 0):
         raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
     else:
-        if(ingest(contents, file) == 1):
+        if(ingest(contents, DB_COLLECTION_NAME, DB_CONN_STRING, file) == 1):
             return {"filename" : file.filename}
     raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 

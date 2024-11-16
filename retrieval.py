@@ -14,14 +14,14 @@ import os
 import fastapi
 
 
-async def retrieval_func(question, chat_history: List[Dict[str, str]] = []):
+async def retrieval_func(question, collection_name, conn_string, chat_history: List[Dict[str, str]] = []):
     embeddings = OllamaEmbeddings(
         model="mxbai-embed-large"
     )
 
     llm = ChatOllama(model="qwen2.5:0.5b", temperature=0, disable_streaming=False)
-    vector_store_retriever = PGVector(connection_string=os.environ['POSTGRE_CONNECTION_STRING'],
-                            collection_name=os.environ['POSTGRE_COLLECTION_NAME'],
+    vector_store_retriever = PGVector(connection_string=conn_string,
+                            collection_name=collection_name,
                             embedding_function=embeddings).as_retriever(search_type="similarity_score_threshold",search_kwargs={
                                                                                                 "k": 5,
                                                                                                 "score_threshold": 0.61})
