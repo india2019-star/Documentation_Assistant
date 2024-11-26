@@ -1,5 +1,5 @@
-import glob
 import os
+import gc
 import pytesseract
 from pathlib import Path
 import concurrent.futures
@@ -23,6 +23,12 @@ def ingest(file_contents, collection_name, conn_string, file: UploadFile = File(
     uploaded_file_location = _get_pdf_file_paths(assets_folder, file_contents, file)
     print(uploaded_file_location)
     _load_split_push(uploaded_file_location, collection_name, conn_string)
+    if(os.path.isfile(uploaded_file_location)):
+        try:
+            os.remove(uploaded_file_location)
+            print(f"File with path: {uploaded_file_location} removed successfully...")
+        except:
+            print(f"Permission Denied...")
     return 1
 
 
@@ -48,16 +54,15 @@ def _load_split_push(filePath: string, collection_name: string, conn_string: str
                             connection_string=conn_string,
                             use_jsonb=True)
     print("Finished ingestion...")
-    if(os.path.isfile(filePath)):
-        os.remove(filePath)
-        print(f"File with path: {filePath} removed successfully...")
+    
 
 
 def _get_pdf_file_paths(folder_path,file_contents, file : UploadFile = File(...)):
     file_location = os.path.join(folder_path, file.filename)
     with open(file_location, "wb") as buffer:
         buffer.write(file_contents)
-    
+    gc.collect()
+    print("File closed:", buffer.closed)
     return file_location
 
 def _convert_entire_pdf_to_image(file_path: str, scale=300/72):
@@ -76,7 +81,7 @@ def _convert_entire_pdf_to_image(file_path: str, scale=300/72):
         image.save(image_byte_array, format='jpeg', optimize=True)
         image_byte_array = image_byte_array.getvalue()
         final_list_of_images.append(dict({index: image_byte_array}))
-        
+    loaded_doc.close()
     return final_list_of_images
 
 
