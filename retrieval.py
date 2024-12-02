@@ -1,16 +1,10 @@
-import json
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 from langchain_community.vectorstores import PGVector
-from langchain_core.messages import AIMessageChunk
 from langchain import hub
-from prompts import system_template
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import SystemMessagePromptTemplate, ChatPromptTemplate, MessagesPlaceholder
 from typing import List, Dict
-import os
 import fastapi
 
 
@@ -25,10 +19,7 @@ async def retrieval_func(question, collection_name, conn_string, chat_history: L
                             embedding_function=embeddings).as_retriever(search_type="similarity_score_threshold",search_kwargs={
                                                                                                 "k": 5,
                                                                                                 "score_threshold": 0.61})
-    # retrieval_qa_chat_prompt = ChatPromptTemplate.from_messages([
-    #     SystemMessagePromptTemplate.from_template(system_template),
-    #     HumanMessage("{input}")
-    # ])
+
     retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
     combine_stuff_documents = create_stuff_documents_chain(llm, retrieval_qa_chat_prompt)
     history_chat_prompt = hub.pull("langchain-ai/chat-langchain-rephrase")

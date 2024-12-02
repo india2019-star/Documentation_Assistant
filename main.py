@@ -6,13 +6,14 @@ from handler import CustomCallBackHandler
 from ingestion import ingest
 from retrieval import retrieval_func
 from schemas import chat_request, chat_response
-from typing import List, Dict
+from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import File, UploadFile
+from fastapi import File, Form, UploadFile
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
-
+from functionality import Functionality
 from streaming_retrieval import response_generator_func
+from summary_generator import generate_summary
 
 load_dotenv(override=True)
 
@@ -79,6 +80,18 @@ async def process_and_retrieve(req : chat_request.ChatRequest):
     return StreamingResponse(response_generator_func(req.question, chat_history_tuple_list, streamer_queue, customHandler), media_type="text/event-stream")
     # return chat_response.ChatResponse(answer=result["answer"], responseCode=200, responseStatus="OK", sourceDocuments=result['source_documents'])
 
+
+
+@app.post("/summarization")
+async def upload_and_summarize(file: UploadFile = File(...), summary_type: str = Form(...)):
+    if file is None:
+        raise fastapi.HTTPException(status_code=404, detail="NO VALID FILE UPLOADED!!!")
+    contents = await file.read()
+    if(len(contents) == 0):
+        raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
+    else:
+        result = generate_summary(contents, summary_type, file)
+    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
 
 
 
