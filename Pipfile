@@ -21,6 +21,7 @@ python-multipart = "*"
 pytesseract = "*"
 pypdfium2 = "*"
 python-dotenv = "*"
+transformers = "*"
 
 [dev-packages]
 

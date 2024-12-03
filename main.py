@@ -90,8 +90,10 @@ async def upload_and_summarize(file: UploadFile = File(...), summary_type: str =
     if(len(contents) == 0):
         raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
     else:
+        print(f"\n{summary_type}\n")
         result = generate_summary(contents, summary_type, file)
-    raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
+        return result
+    
 
 
 
