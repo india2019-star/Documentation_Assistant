@@ -9,10 +9,11 @@ from common_utilities import parse_documents_return_documents
 
 
 def ingest(file_contents, collection_name, conn_string, file: UploadFile = File(...)):
-    chunked_docs: List[Document] = parse_documents_return_documents(file_contents, file)
-    _load_split_push(chunked_docs, collection_name, conn_string)
+    parsed_docs_result = parse_documents_return_documents(file_contents, file)
+    downloadable_doc_file_path = parsed_docs_result["downloadable_file_path"]
+    _load_split_push(parsed_docs_result["documents_from_splitted_texts"], collection_name, conn_string)
 
-    return 1
+    return downloadable_doc_file_path
 
 
 

@@ -1,4 +1,5 @@
 
+from pathlib import Path
 from queue import Queue
 import fastapi
 import os
@@ -9,7 +10,7 @@ from schemas import chat_request, chat_response
 from typing import List, Dict, Optional
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import File, Form, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from dotenv import load_dotenv
 from functionality import Functionality
 from streaming_retrieval import response_generator_func
@@ -62,9 +63,29 @@ async def ingest_docs_and_insert(file: UploadFile = File(...)):
     if(len(contents) == 0):
         raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
     else:
-        if(ingest(contents, DB_COLLECTION_NAME, DB_CONN_STRING, file) == 1):
-            return {"filename" : file.filename}
+        ingestion_result = ingest(contents, DB_COLLECTION_NAME, DB_CONN_STRING, file)
+        if(ingestion_result != ''):
+            return {"filename" : file.filename,
+                    "download_url" : ingestion_result}
     raise fastapi.HTTPException(status_code=500, detail="SOME ERROR OCCURRED!!!!")
+
+
+@app.get("/download/{file_name}")
+async def download_file(file_name: str):
+
+    download_file_path = Path('doc_format_store') / file_name
+
+    print(f"\nDOWNLOAD FILE PATH -->{download_file_path}\n")
+
+    if download_file_path.exists():
+        return FileResponse(
+            path=download_file_path,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            filename=file_name
+        )
+    else:
+        raise fastapi.HTTPException(status_code=404, detail="FILE NOT FOUND!!!!")
+
 
 
 @app.post("/streaming-test")

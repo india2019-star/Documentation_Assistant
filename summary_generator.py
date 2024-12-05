@@ -35,7 +35,9 @@ async def summary_streaming_generator_func(file_contents, summary_type: str,stre
         await asyncio.sleep(0.1)
 
 def _generate_summary(file_contents, summary_type: str, customHandler: CustomCallBackHandler, file: UploadFile = File(...)):
-    chunked_docs = parse_documents_return_documents(file_contents, file)
+    parsed_docs_result = parse_documents_return_documents(file_contents, file)
+
+    chunked_docs = parsed_docs_result["documents_from_splitted_texts"]
     print(len(chunked_docs))
     llm = ChatOllama(model="llama3.1:latest", temperature=0,callbacks=[customHandler], disable_streaming=False)
     individual_summary_prompt_template = PromptTemplate(
