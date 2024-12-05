@@ -13,7 +13,7 @@ from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from functionality import Functionality
 from streaming_retrieval import response_generator_func
-from summary_generator import generate_summary
+from summary_generator import summary_streaming_generator_func
 
 load_dotenv(override=True)
 
@@ -91,8 +91,10 @@ async def upload_and_summarize(file: UploadFile = File(...), summary_type: str =
         raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
     else:
         print(f"\n{summary_type}\n")
-        result = generate_summary(contents, summary_type, file)
-        return result
+        streamer_queue = Queue()
+        customHandler = CustomCallBackHandler(queue=streamer_queue)
+        # result = generate_summary(contents, summary_type, file)
+        return StreamingResponse(summary_streaming_generator_func(contents, summary_type, streamer_queue, customHandler, file), media_type="text/event-stream")
     
 
 
