@@ -13,7 +13,7 @@ async def retrieval_func(question, collection_name, conn_string, chat_history: L
         model="mxbai-embed-large"
     )
 
-    llm = ChatOllama(model="qwen2.5:0.5b", temperature=0, disable_streaming=False)
+    llm = ChatOllama(model="qwen2:0.5b", temperature=0, disable_streaming=False)
     vector_store_retriever = PGVector(connection_string=conn_string,
                             collection_name=collection_name,
                             embedding_function=embeddings).as_retriever(search_type="similarity_score_threshold",search_kwargs={
