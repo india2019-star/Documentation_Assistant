@@ -29,7 +29,7 @@ async def summary_streaming_generator_func(file_contents, summary_type: str,stre
             break
         data_dict = {"data": value}
         data_json = json.dumps(data_dict.get("data"))
-        yield f"data: {data_json}\n\n"
+        yield f"data: {data_json}"
         streamer_queue.task_done()
 
         await asyncio.sleep(0.1)
@@ -39,7 +39,7 @@ def _generate_summary(file_contents, summary_type: str, customHandler: CustomCal
 
     chunked_docs = parsed_docs_result["documents_from_splitted_texts"]
     print(len(chunked_docs))
-    llm = ChatOllama(model="llama3.1:latest", temperature=0,callbacks=[customHandler], disable_streaming=False)
+    llm = ChatOllama(model="qwen2:0.5b", temperature=0,callbacks=[customHandler], disable_streaming=False)
     individual_summary_prompt_template = PromptTemplate(
         template=individual_summary_template,
         input_variables=["text"]
