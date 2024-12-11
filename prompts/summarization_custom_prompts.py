@@ -3,10 +3,13 @@ TEXT: `{text}`
 CONCISE SUMMARY:
 '''
 
-combined_summary_template=r'''Write a DETAILED summary of the  following text that covers all key points.
-You must list all the import points in bullet point format.
+combined_summary_template=r'''The following is a set of summaries:
+{docs}
+Take these and distill it into a final, {summary_type} summary
+of the main themes. You must list all the import points in bullet point format.
 Add a title to your summary.
 START your summary with an INTRODUCTION that gives an overview of the summary. If possible try to end with
-a CONCLUSION..
-TEXT: `{text}`
+a CONCLUSION.
 '''
+
+

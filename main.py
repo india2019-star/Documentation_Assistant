@@ -7,14 +7,13 @@ from handler import CustomCallBackHandler
 from ingestion import ingest
 from retrieval import retrieval_func
 from schemas import chat_request, chat_response
-from typing import List, Dict, Optional
+from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import File, Form, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from dotenv import load_dotenv
-from functionality import Functionality
 from streaming_retrieval import response_generator_func
-from summary_generator import summary_streaming_generator_func
+from summary_graph.summ_graph_builder import  summary_generation_langgraph
 
 load_dotenv(override=True)
 
@@ -111,11 +110,7 @@ async def upload_and_summarize(file: UploadFile = File(...), summary_type: str =
     if(len(contents) == 0):
         raise fastapi.HTTPException(status_code=400, detail="UPLOADED FILE IS EMPTY!!!") 
     else:
-        print(f"\n{summary_type}\n")
-        streamer_queue = Queue()
-        customHandler = CustomCallBackHandler(queue=streamer_queue)
-        # result = generate_summary(contents, summary_type, file)
-        return StreamingResponse(summary_streaming_generator_func(contents, summary_type, streamer_queue, customHandler, file), media_type="text/event-stream")
+        return StreamingResponse(summary_generation_langgraph(contents, summary_type, file), media_type="text/event-stream")
     
 
 

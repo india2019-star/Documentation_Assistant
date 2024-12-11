@@ -23,6 +23,7 @@ pypdfium2 = "*"
 python-dotenv = "*"
 transformers = "*"
 python-docx = "*"
+langgraph = "*"
 
 [dev-packages]
 

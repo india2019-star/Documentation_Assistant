@@ -10,6 +10,7 @@ from typing import List
 from fastapi import File, UploadFile
 from langchain.schema import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.messages import AIMessageChunk
 from docx import Document as DocxDocument
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -26,6 +27,16 @@ def format_source_documents(context):
             item = str(item).replace("G:/","https://")
         source_docs_in_string_format += f"{index + 1}. {item}\n"
         return source_docs_in_string_format
+
+
+def serialize_message_chunk_while_streaming(chunk):
+
+    if isinstance(chunk,AIMessageChunk):
+        return chunk.content
+    else:
+        raise TypeError(
+            f"Object of type {type(chunk).__name__} is not correctly formatted for serialization"
+        )
 
 
 
@@ -45,15 +56,11 @@ def parse_documents_return_documents(file_contents, file: UploadFile = File(...)
 
      if(os.path.isfile(uploaded_file_location)):
         try:
-            extracted_text = "\n\n".join([
-            item.page_content for item in documents_from_splitted_texts
-            ])
-
             docx_file_name = f"{Path(filePathStr).stem}.docx"
             docx_path = Path('doc_format_store') / docx_file_name
             document = DocxDocument()
             document.add_heading("Extracted Text", level=1)
-            document.add_paragraph(extracted_text)
+            document.add_paragraph(extracted_text_from_image)
             document.save(docx_path)
             print(f"\nFILE PATH NAME---> {docx_path}\n")
 
