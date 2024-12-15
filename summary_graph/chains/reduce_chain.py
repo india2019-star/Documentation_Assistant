@@ -7,7 +7,7 @@ llm = ChatOllama(model="qwen2:0.5b", temperature=0)
 
 reduce_prompt_template = PromptTemplate(
     template=combined_summary_template,
-    input_variables=['summary_type', 'text']
+    input_variables=['summary_type', 'docs']
 )
 
 final_reduce_chain = (

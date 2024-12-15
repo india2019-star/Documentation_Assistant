@@ -13,3 +13,10 @@ a CONCLUSION.
 '''
 
 
+collapse_summary_template=r'''The following is a set of summaries:
+{docs}
+Take these and distill it into a final, consolidated summary
+of the main themes.
+'''
+
+

@@ -11,6 +11,7 @@ from fastapi import File, UploadFile
 from langchain.schema import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.messages import AIMessageChunk
+from langchain_ollama import ChatOllama
 from docx import Document as DocxDocument
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -76,6 +77,15 @@ def parse_documents_return_documents(file_contents, file: UploadFile = File(...)
 
 
 
+def calc_max_token_cnt(docs: List[Document]):
+    llm = get_llm_for_answer()
+    return sum(
+        llm.get_num_tokens(item.page_content)  for item in docs
+    )
+
+def get_llm_for_answer():
+    llm = ChatOllama(model="qwen2:0.5b", temperature=0)
+    return llm
 
 
 

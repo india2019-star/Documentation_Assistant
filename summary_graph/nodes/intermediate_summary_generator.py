@@ -10,9 +10,6 @@ async def generate_intermediate_summary_func(state: GraphIndividualSummaryState)
 
 
 def map_summaries(state: GraphOverallSummaryState):
-    # We will return a list of `Send` objects
-    # Each `Send` object consists of the name of a node in the graph
-    # as well as the state to send to that node
     return [
         Send(GENERATE_INTERMEDIATE_SUMMARY, {"content": content}) for content in state["contents"]
     ]
