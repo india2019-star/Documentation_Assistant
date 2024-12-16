@@ -2,8 +2,9 @@ from langchain_ollama import ChatOllama
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from prompts.summarization_custom_prompts import combined_summary_template
+from common_utilities import get_llm_for_answer
 
-llm = ChatOllama(model="qwen2:0.5b", temperature=0)
+llm = get_llm_for_answer()
 
 reduce_prompt_template = PromptTemplate(
     template=combined_summary_template,
