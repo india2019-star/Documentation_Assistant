@@ -8,7 +8,8 @@ from summary_graph.summary_consts import (
     GENERATE_FINAL_SUMMARY, 
     GENERATE_INTERMEDIATE_SUMMARY,
     COLLECT_SUMMARIES,
-    COLLAPSE_SUMMARIES
+    COLLAPSE_SUMMARIES,
+    CHAIN_TYPE_ASSESSMENT
 )
 from typing import Literal
 
@@ -17,7 +18,8 @@ from summary_graph.nodes import (
     generate_intermediate_summary_func, 
     generate_final_summary_func, 
     generate_collapse_summary_func, 
-    collect_summaries
+    collect_summaries,
+    assess_chain_type_func
 )
 
 
@@ -26,16 +28,21 @@ async def summary_generation_langgraph(file_contents, summary_type: str, file: U
 
     builder = StateGraph(GraphOverallSummaryState)
 
+    builder.add_node(CHAIN_TYPE_ASSESSMENT, assess_chain_type_func)
     builder.add_node(GENERATE_INTERMEDIATE_SUMMARY, generate_intermediate_summary_func)
     builder.add_node(COLLECT_SUMMARIES, collect_summaries)
     builder.add_node(COLLAPSE_SUMMARIES, generate_collapse_summary_func)
     builder.add_node(GENERATE_FINAL_SUMMARY, generate_final_summary_func)
 
-    builder.add_conditional_edges(START,map_summaries,[GENERATE_INTERMEDIATE_SUMMARY])
+    builder.add_conditional_edges(CHAIN_TYPE_ASSESSMENT, map_summaries, [GENERATE_INTERMEDIATE_SUMMARY, GENERATE_FINAL_SUMMARY])
+
+    # builder.add_conditional_edges(START,map_summaries,[GENERATE_INTERMEDIATE_SUMMARY])
     builder.add_edge(GENERATE_INTERMEDIATE_SUMMARY, COLLECT_SUMMARIES)
     builder.add_conditional_edges(COLLECT_SUMMARIES,summary_decision_func)
     builder.add_conditional_edges(COLLAPSE_SUMMARIES,summary_decision_func)
     builder.add_edge(GENERATE_FINAL_SUMMARY, END)
+
+    builder.set_entry_point(CHAIN_TYPE_ASSESSMENT)
 
 
     graph = builder.compile()
@@ -49,7 +56,7 @@ async def summary_generation_langgraph(file_contents, summary_type: str, file: U
 
     chunked_docs = parsed_docs_result["documents_from_splitted_texts"]
 
-    async for event in graph.astream_events({"summary_type": summary_type, "contents": [item.page_content for item in chunked_docs]}, version='v2'):
+    async for event in graph.astream_events({"summary_type": summary_type, "contents": [item.page_content for item in chunked_docs], "contents_in_doc_format": chunked_docs}, version='v2'):
         sources_tags = ["seq:step:2", "final_reduce_chain"]
 
         if  all(val in event["tags"] for val in sources_tags) and  event["event"] == "on_chat_model_stream":
