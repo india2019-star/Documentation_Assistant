@@ -10,6 +10,7 @@ from summary_graph.summary_consts import (
     COLLECT_SUMMARIES,
     COLLAPSE_SUMMARIES
 )
+from typing import Literal
 
 from summary_graph.nodes import (
     map_summaries, 
@@ -57,7 +58,7 @@ async def summary_generation_langgraph(file_contents, summary_type: str, file: U
             data_json = json.dumps(data_dict.get("data"))
             yield f"data: {data_json}\n\n"
 
-def summary_decision_func(state: GraphOverallSummaryState):
+def summary_decision_func(state: GraphOverallSummaryState) -> Literal["collapse_summaries", "generate_final_summary"]:
     token_cnt = calc_max_token_cnt(state["collapsed_summaries"])
     if(token_cnt > 3000):
         return COLLAPSE_SUMMARIES
