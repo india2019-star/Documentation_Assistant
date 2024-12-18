@@ -4,7 +4,7 @@ import pytesseract
 import pypdfium2 as pdfium
 from io import BytesIO
 from PIL import Image
-from pytesseract import image_to_string
+from pytesseract import image_to_data, image_to_string
 from pathlib import Path
 from typing import List
 from fastapi import File, UploadFile
@@ -26,7 +26,7 @@ def format_source_documents(context):
         source_docs_in_string_format = "Sources:\n"
         for index, item in enumerate(source_docs_list):
             item = str(item).replace("\\","/")
-            item = str(item).replace("G:/","https://")
+            item = str(item).replace("tempstore/","https://")
         source_docs_in_string_format += f"{index + 1}. {item}\n"
         return source_docs_in_string_format
 
@@ -49,7 +49,7 @@ def parse_documents_return_documents(file_contents, functionality_type: str, fil
      filePathStr = str(uploaded_file_location).replace('\\','/')
      converted_result_from_pdf_to_image = _convert_entire_pdf_to_image(filePathStr)
      extracted_text_from_image = _extract_text_with_pytesseract(converted_result_from_pdf_to_image)
-     recursive_text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=500)
+     recursive_text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
      splitted_texts = recursive_text_splitter.split_text(extracted_text_from_image)
      documents_from_splitted_texts: List[Document] = [Document(page_content=text_item, metadata={"source": filePathStr, "page_number": i+1})  
                                          for i, text_item in enumerate(splitted_texts)]
@@ -98,7 +98,6 @@ def _get_pdf_file_paths(folder_path,file_contents, file : UploadFile = File(...)
     with open(file_location, "wb") as buffer:
         buffer.write(file_contents)
     gc.collect()
-    print("File closed:", buffer.closed)
     return file_location
 
 
@@ -130,7 +129,44 @@ def _extract_text_with_pytesseract(list_dict_final_images):
     for index, image_bytes in enumerate(image_list):
         
         image = Image.open(BytesIO(image_bytes))
-        raw_text = str(image_to_string(image))
+        raw_text = str(_processing_data_conf(image))
         image_content.append(raw_text)
     
     return "\n".join(image_content)
+
+
+def _processing_data_conf(image_byte):
+    r_text = image_to_data(image_byte, lang="eng",output_type=pytesseract.Output.DICT)
+    
+    curr_block, curr_para, curr_line = -1, -1, -1
+    recreated_text = []
+    for index, item in enumerate(r_text["text"]):
+        if int(r_text["conf"][index]) <= 80 or item == '':
+            continue
+            
+        changed_block = curr_block != r_text['block_num'][index] != curr_block
+        changed_para = curr_para != r_text['par_num'][index] != curr_para
+        changed_line = curr_line != r_text['line_num'][index] != curr_line
+        
+        if changed_block:
+            if recreated_text:
+                recreated_text.append("")
+            curr_block = r_text['block_num'][index]
+            curr_para = r_text['par_num'][index]
+            curr_line = r_text['line_num'][index]
+        elif changed_para:
+            if recreated_text and not recreated_text[-1].endswith("\n\n"):
+                recreated_text.append("")
+            curr_para = r_text['par_num'][index]
+            curr_line = r_text['line_num'][index]
+        elif changed_line:
+            recreated_text.append("")
+            curr_line = r_text['line_num'][index]
+        
+        if recreated_text:
+            recreated_text[-1] += " " + item.strip()
+        else:
+            recreated_text.append(item.strip())
+    
+    final_result = "\n".join([line.strip() for line in recreated_text])
+    return final_result
