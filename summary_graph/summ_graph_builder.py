@@ -12,6 +12,7 @@ from summary_graph.summary_consts import (
     CHAIN_TYPE_ASSESSMENT
 )
 from typing import Literal
+from functionality import Functionality
 
 from summary_graph.nodes import (
     map_summaries, 
@@ -36,7 +37,6 @@ async def summary_generation_langgraph(file_contents, summary_type: str, file: U
 
     builder.add_conditional_edges(CHAIN_TYPE_ASSESSMENT, map_summaries, [GENERATE_INTERMEDIATE_SUMMARY, GENERATE_FINAL_SUMMARY])
 
-    # builder.add_conditional_edges(START,map_summaries,[GENERATE_INTERMEDIATE_SUMMARY])
     builder.add_edge(GENERATE_INTERMEDIATE_SUMMARY, COLLECT_SUMMARIES)
     builder.add_conditional_edges(COLLECT_SUMMARIES,summary_decision_func)
     builder.add_conditional_edges(COLLAPSE_SUMMARIES,summary_decision_func)
@@ -52,7 +52,7 @@ async def summary_generation_langgraph(file_contents, summary_type: str, file: U
     # except:
     #     print(f"Could not draw graph to mentioned path...")
 
-    parsed_docs_result = parse_documents_return_documents(file_contents, file)
+    parsed_docs_result = parse_documents_return_documents(file_contents, Functionality.SUMMARIZATION.value, file)
 
     chunked_docs = parsed_docs_result["documents_from_splitted_texts"]
 

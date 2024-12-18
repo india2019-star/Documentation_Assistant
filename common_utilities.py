@@ -13,6 +13,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.messages import AIMessageChunk
 from langchain_ollama import ChatOllama
 from docx import Document as DocxDocument
+from functionality import Functionality
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
@@ -41,7 +42,7 @@ def serialize_message_chunk_while_streaming(chunk):
 
 
 
-def parse_documents_return_documents(file_contents, file: UploadFile = File(...)):
+def parse_documents_return_documents(file_contents, functionality_type: str, file: UploadFile = File(...)):
      assets_folder = Path('temp_store')
 
      uploaded_file_location = _get_pdf_file_paths(assets_folder, file_contents, file)
@@ -57,13 +58,15 @@ def parse_documents_return_documents(file_contents, file: UploadFile = File(...)
 
      if(os.path.isfile(uploaded_file_location)):
         try:
-            docx_file_name = f"{Path(filePathStr).stem}.docx"
-            docx_path = Path('doc_format_store') / docx_file_name
-            document = DocxDocument()
-            document.add_heading("Extracted Text", level=1)
-            document.add_paragraph(extracted_text_from_image)
-            document.save(docx_path)
-            print(f"\nFILE PATH NAME---> {docx_path}\n")
+            docx_file_name=""
+            if(functionality_type == Functionality.CHAT_ASSISTANT.value):
+                docx_file_name = f"{Path(filePathStr).stem}.docx"
+                docx_path = Path('doc_format_store') / docx_file_name
+                document = DocxDocument()
+                document.add_heading("Extracted Text", level=1)
+                document.add_paragraph(extracted_text_from_image)
+                document.save(docx_path)
+                print(f"\nFILE PATH NAME---> {docx_path}\n")
 
             os.remove(uploaded_file_location)
             print(f"File with path: {uploaded_file_location} removed successfully...")

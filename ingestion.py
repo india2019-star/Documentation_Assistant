@@ -6,10 +6,11 @@ from langchain_community.vectorstores import PGVector
 from langchain_ollama import OllamaEmbeddings
 from langchain.schema import Document
 from common_utilities import parse_documents_return_documents
+from functionality import Functionality
 
 
 def ingest(file_contents, collection_name, conn_string, file: UploadFile = File(...)):
-    parsed_docs_result = parse_documents_return_documents(file_contents, file)
+    parsed_docs_result = parse_documents_return_documents(file_contents, Functionality.CHAT_ASSISTANT.value, file)
     downloadable_doc_file_path = parsed_docs_result["downloadable_file_path"]
     _load_split_push(parsed_docs_result["documents_from_splitted_texts"], collection_name, conn_string)
 
